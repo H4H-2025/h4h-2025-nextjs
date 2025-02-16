@@ -44,7 +44,7 @@ async function getAllFilesInFolder(drive: any, folderId: string, folderPath: str
 export async function POST(req: Request) {
     try {
         const { folderId, folderName } = await req.json();
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const accessToken = cookieStore.get("google_access_token")?.value;
 
         if (!accessToken) {

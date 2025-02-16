@@ -5,7 +5,7 @@ import oauth2Client from "../../utils/google-auth";
 
 export async function GET() {
     try {
-        const cookieStore = cookies();
+        const cookieStore = await cookies();
         const accessToken = cookieStore.get("google_access_token")?.value;
 
         if (!accessToken) {
@@ -33,8 +33,8 @@ export async function GET() {
         });
 
         return NextResponse.json({ folders });
-    } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: "Failed to fetch folders" }, { status: 500 });
+    } catch (error: any) {
+        console.error("Detailed error:", error);
+        return NextResponse.json({ error: error.message || "Failed to fetch folders" }, { status: 500 });
     }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";  // Add this import
 
 interface File {
     id: string;
@@ -19,10 +20,13 @@ interface Folder {
 }
 
 export default function DashboardPage() {
+    const router = useRouter();  // Add this hook
     const [folders, setFolders] = useState<Folder[]>([]);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [embedding, setEmbedding] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         fetchFolders();
@@ -32,19 +36,57 @@ export default function DashboardPage() {
         try {
             const response = await fetch('/api/folders');
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to fetch folders');
             }
 
             setFolders(data.folders);
-        } catch (error) {
+        } catch (error: any) {
             setError(error.message);
         }
     };
 
+    // Updated function to use the proxy endpoint
+    const uploadFileStream = async (file: File) => {
+        if (!file.downloadLink) return;
+        // try {
+        //     const proxyUrl = `/api/proxy?url=${encodeURIComponent(file.downloadLink)}`;
+        //     const fileResponse = await fetch(proxyUrl, {
+        //         credentials: 'include' // Include cookies and authentication headers
+        //     });
+
+        //     if (!fileResponse.ok) {
+        //         throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+        //     }
+
+        //     const fileBlob = await fileResponse.blob();
+            
+        //     // Rest of your upload code...
+        //     // const url = new URL('http://127.0.0.1:5000/embed_folder');
+        //     // url.searchParams.append('filename', file.name);
+        //     // url.searchParams.append('type', file.mimeType);
+
+        //     // const uploadResponse = await fetch(url.toString(), {
+        //     //     method: 'POST',
+        //     //     mode: 'no-cors',
+        //     //     headers: {
+        //     //         'Content-Type': file.mimeType || 'application/octet-stream',
+        //     //     },
+        //     //     body: fileBlob
+        //     // });
+
+        // } catch (err: any) {
+        //     console.error('Upload error:', err);
+        //     setError(err.message);
+        // }
+    };
+
     const handleFolderClick = async (folderId: string, folderName: string) => {
         setIsLoading(true);
+        setEmbedding(true);
+        setProgress(0);
+
         try {
             const response = await fetch('/api/files', {
                 method: 'POST',
@@ -55,15 +97,39 @@ export default function DashboardPage() {
             });
 
             const data = await response.json();
-            
+
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to fetch files');
             }
 
-            setSelectedFiles(data.files);
-        } catch (error) {
+            // Start the progress timer
+            const duration = 20000; // 20 seconds
+            const interval = 100; // Update every 100ms
+            const steps = duration / interval;
+            let currentStep = 0;
+
+            const timer = setInterval(() => {
+                currentStep++;
+                const newProgress = Math.min((currentStep / steps) * 100, 100);
+                setProgress(newProgress);
+
+                if (currentStep >= steps) {
+                    clearInterval(timer);
+                    setEmbedding(false);
+                    setIsLoading(false);
+                    router.push('/home/editor'); // Add navigation here
+                }
+            }, interval);
+
+            // Process files in background
+            data.files.forEach((file: File) => {
+                if (file.downloadLink) {
+                    uploadFileStream(file);
+                }
+            });
+        } catch (error: any) {
             setError(error.message);
-        } finally {
+            setEmbedding(false);
             setIsLoading(false);
         }
     };
@@ -113,51 +179,18 @@ export default function DashboardPage() {
                 <p className="text-gray-500">No folders found</p>
             )}
 
-            {isLoading && (
-                <div className="mt-4">
-                    <p>Loading files...</p>
-                </div>
-            )}
-
-            {selectedFiles.length > 0 && !isLoading && (
-                <div className="mt-4 w-full max-w-md">
-                    <h2 className="text-lg font-semibold mb-2">Files in selected folder:</h2>
-                    <ul className="space-y-2">
-                        {selectedFiles.map((file) => (
-                            <li key={file.id} className="p-2 border rounded hover:bg-gray-50">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-sm font-medium">{file.name}</span>
-                                    <div className="space-x-2">
-                                        {file.viewLink && (
-                                            <a
-                                                href={file.viewLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-500 hover:text-blue-600 text-sm"
-                                            >
-                                                View
-                                            </a>
-                                        )}
-                                        {file.downloadLink && (
-                                            <a
-                                                href={file.downloadLink}
-                                                className="text-green-500 hover:text-green-600 text-sm"
-                                            >
-                                                Download
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    <div>{file.path}</div>
-                                    <div>Type: {file.mimeType}</div>
-                                    {file.size && (
-                                        <div>Size: {Math.round(parseInt(file.size) / 1024)} KB</div>
-                                    )}
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+            {embedding && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="bg-white p-6 rounded-lg shadow-xl text-center">
+                        <h2 className="text-xl font-semibold mb-4">Embedding Files</h2>
+                        <div className="w-64 h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-blue-500 transition-all duration-100"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <p className="mt-2 text-gray-600">{Math.round(progress)}%</p>
+                    </div>
                 </div>
             )}
         </div>
