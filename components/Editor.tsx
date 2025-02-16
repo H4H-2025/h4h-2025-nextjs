@@ -1,26 +1,29 @@
-// components/Editor.tsx
-"use client"
+import React, { useState, useEffect } from 'react'
 
-import { useState, useEffect } from 'react'
+interface EditorProps {
+  initialContent: string;  // Define the content prop
+}
 
-export default function Editor() {
-  const [content, setContent] = useState('')
+const Editor = ({ initialContent }: EditorProps) => {
+  // State for content inside the editor (editable by user)
+  const [content, setContent] = useState(initialContent);
 
-  useEffect(() => {
-    return () => {
-      // Cleanup when editor is closed
-    }
-  }, [])
+  // Handle user input to update the editor's content
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+  }
 
   return (
-    <div className="p-4 h-full overflow-auto">
-      <h2>Editor</h2>
+    <div className="editor-container flex flex-col h-full">
+      <h2 className="text-lg font-bold">Editor</h2>
       <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        className="w-full h-full p-2 border"
-        placeholder="Start typing..."
+        value={content}  // Display the content in a textarea
+        onChange={handleChange}
+        className="w-full h-full p-2 border rounded"
+        placeholder="Your data will appear here..."
       />
     </div>
   )
 }
+
+export default Editor

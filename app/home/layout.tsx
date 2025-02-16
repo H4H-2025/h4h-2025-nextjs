@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from "next/link";
 import { 
   Sidebar,
   SidebarProvider,
@@ -8,7 +9,7 @@ import {
   SidebarMenuButton,
   SidebarTrigger
 } from "@/components/ui/sidebar";
-import { HomeIcon, FolderIcon, UsersIcon, SettingsIcon } from "lucide-react";
+import { HomeIcon, FolderIcon, FilePenIcon} from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,39 +20,40 @@ const HomeLayout = ({ children }: LayoutProps) => {
     <SidebarProvider defaultOpen={true}>
       <div className="flex min-h-screen w-full">
         {/* Desktop Sidebar */}
-        <Sidebar className="shrink-0">
+        <Sidebar className="shrink-0 p-4"> {/* Adds padding around the sidebar */}
           <SidebarContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Dashboard">
+            <SidebarMenuItem>
+              <Link href="/home">
+                <SidebarMenuButton tooltip="Home">
                   <HomeIcon className="h-4 w-4" />
-                  <span>Dashboard</span>
+                  <span>Home</span>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Projects">
+              </Link>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <Link href="/home/upload">
+                <SidebarMenuButton tooltip="Upload">
                   <FolderIcon className="h-4 w-4" />
-                  <span>Projects</span>
+                  <span>Upload</span>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Team">
-                  <UsersIcon className="h-4 w-4" />
-                  <span>Team</span>
+              </Link>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <Link href="/home/editor">
+                <SidebarMenuButton tooltip="Editor">
+                  <FilePenIcon className="h-4 w-4" />
+                  <span>Editor</span>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Settings">
-                  <SettingsIcon className="h-4 w-4" />
-                  <span>Settings</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              </Link>
+            </SidebarMenuItem>
+
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
+
 
         {/* Main Content */}
         <main className="flex-1 w-full">
