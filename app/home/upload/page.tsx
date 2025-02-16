@@ -16,7 +16,7 @@ const ClientLoginPage = () => {
         window.gapi.load("client:auth2", () => {
           // Initialize gapi.auth2 with your OAuth 2.0 client ID
           window.gapi.auth2.init({
-            client_id: "897169920656-qge61k85p0h127ac0iarnkta04pe6als.apps.googleusercontent.com", // Replace with your actual OAuth 2.0 client ID from Google Developer Console
+            client_id: "897169920656-qge61k85p0h127ac0iarnkta04pe6als.apps.googleusercontent.com",
           }).then(() => {
             console.log("Google API client initialized");
           }).catch((error: any) => {
@@ -39,19 +39,23 @@ const ClientLoginPage = () => {
 
   // This function will handle the login process
   const handleLogin = () => {
-    const GoogleAuth = window.gapi.auth2.getAuthInstance();
-    if (GoogleAuth) {
-      GoogleAuth.signIn().then(() => {
-        console.log("User signed in");
-        const profile = GoogleAuth.currentUser.get().getBasicProfile();
-        console.log("Name: " + profile.getName());
-        console.log("Email: " + profile.getEmail());
-        // Here you can handle the signed-in user's data, such as sending it to your server
-      }).catch((error: any) => {
-        console.error("Google login failed:", error);
-      });
+    if (window.gapi && window.gapi.auth2) {
+      const GoogleAuth = window.gapi.auth2.getAuthInstance();
+      if (GoogleAuth) {
+        GoogleAuth.signIn().then(() => {
+          console.log("User signed in");
+          const profile = GoogleAuth.currentUser.get().getBasicProfile();
+          console.log("Name: " + profile.getName());
+          console.log("Email: " + profile.getEmail());
+          // Here you can handle the signed-in user's data, such as sending it to your server
+        }).catch((error: any) => {
+          console.error("Google login failed:", error);
+        });
+      } else {
+        console.error("GoogleAuth instance is not initialized.");
+      }
     } else {
-      console.error("GoogleAuth instance is not initialized.");
+      console.error("Google API client is not loaded.");
     }
   };
 
