@@ -17,9 +17,9 @@ interface LayoutProps {
 const HomeLayout = ({ children }: LayoutProps) => {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen w-full">
         {/* Desktop Sidebar */}
-        <Sidebar>
+        <Sidebar className="shrink-0">
           <SidebarContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -54,11 +54,13 @@ const HomeLayout = ({ children }: LayoutProps) => {
         </Sidebar>
 
         {/* Main Content */}
-        <main className="flex-1 p-4">
-          <div className="mb-4">
+        <main className="flex-1 w-full">
+          <div className="p-4">
             <SidebarTrigger />
           </div>
-          {children}
+          <div className="w-full">
+            {children}
+          </div>
         </main>
       </div>
     </SidebarProvider>
