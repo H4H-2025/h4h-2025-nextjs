@@ -33,7 +33,7 @@ const HomeLayout = ({ children }: LayoutProps) => {
               </SidebarMenuItem>
 
               <SidebarMenuItem>
-                <Link href="/home/upload">
+                <Link href="/drive">
                   <SidebarMenuButton tooltip="Upload">
                     <FolderIcon className="h-4 w-4" />
                     <span>Upload</span>
@@ -54,9 +54,7 @@ const HomeLayout = ({ children }: LayoutProps) => {
         </Sidebar>
 
         <main className="flex-1 w-full px-6 lg:px-12">
-          <div className="p-4">
-            <SidebarTrigger />
-          </div>
+
           <div className="w-full">
             {children}
           </div>

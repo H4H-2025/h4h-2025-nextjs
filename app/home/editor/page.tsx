@@ -1,12 +1,13 @@
 "use client";
 import { useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { Save, Maximize2, Minimize2 } from 'lucide-react';
+import { Save, Maximize2, Minimize2, FileText } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
+import jsPDF from "jspdf";
 
 interface SearchResponse {
   chunks: string[];
@@ -18,8 +19,8 @@ const MIN_CHAT_SIZE = 30;
 const MAX_CHAT_SIZE = 70;
 
 interface ChatProps {
-  messages: { 
-    text: string; 
+  messages: {
+    text: string;
     sender: 'user' | 'system';
     filePath?: string;
     summary?: string;
@@ -46,19 +47,19 @@ const Chat = ({ messages, onMessageSelect }: ChatProps) => {
                         {message.summary}
                       </div>
                     )}
-                    
+
                     {/* File path in muted color */}
                     {message.filePath && (
                       <div className="text-xs text-muted-foreground">
                         {message.filePath}
                       </div>
                     )}
-                    
+
                     {/* Content in a collapsible section */}
                     <div className="text-sm border-t pt-2 mt-2 text-muted-foreground">
                       {message.text}
                     </div>
-                    
+
                     <Button
                       onClick={() => onMessageSelect(message.text, message.filePath)}
                       variant="secondary"
@@ -98,6 +99,17 @@ export default function EditorPage() {
     messages: Array<{ text: string; sender: 'user' | 'system' }>;
   }>>([]);
 
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+    const currentDate = new Date().toLocaleString();
+
+    doc.setFontSize(12);
+    doc.text(`Generated on: ${currentDate}\n\nCompiled Data:\n\n`, 10, 10);
+    doc.text(editorContent, 10, 20);
+
+    doc.save("compile-data.pdf");
+  };
+
   const handleResize = (newSizes: number[]) => {
     if (newSizes[0] < MIN_CHAT_SIZE) {
     }
@@ -117,16 +129,16 @@ export default function EditorPage() {
   const handleSendMessage = async () => {
     if (currentMessage.trim()) {
       setMessages([{ text: currentMessage, sender: 'user' }]);
-      
+
       try {
         const response = await fetch(`http://127.0.0.1:5000/submit_query?q=${encodeURIComponent(currentMessage)}`);
-        
+
         if (!response.ok) {
           throw new Error('Failed to get response from API');
         }
 
         const data: SearchResponse = await response.json();
-        
+
         // Create separate system messages for each chunk with formatted summary
         const systemMessages = data.chunks.map((chunk, index) => ({
           text: chunk,
@@ -148,7 +160,7 @@ export default function EditorPage() {
         ]);
         console.error('Error:', error);
       }
-      
+
       setCurrentMessage('');
     }
   };
@@ -217,7 +229,7 @@ export default function EditorPage() {
                 placeholder="I want to find..."
                 className="flex-1"
               />
-              <Button 
+              <Button
                 onClick={handleSendMessage}
                 className="flex-none"
               >
@@ -237,13 +249,19 @@ export default function EditorPage() {
               className="p-4"
             >
               <Card className="h-full">
-                <CardContent className="p-4 h-full">
+                <CardContent className="p-4 h-full flex flex-col">
                   <Textarea
                     value={editorContent}
                     onChange={(e) => setEditorContent(e.target.value)}
                     placeholder="Your data will appear here..."
-                    className="h-full min-h-[300px] resize-none"
+                    className="flex-1 resize-none"
                   />
+                  <div className="mt-4 flex justify-end">
+                    <Button onClick={downloadPDF}>
+                      <FileText className="h-5 w-5 mr-2" />
+                      Create PDF
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </ResizablePanel>
