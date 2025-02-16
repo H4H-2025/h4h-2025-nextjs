@@ -1,106 +1,77 @@
-"use client"
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Upload, X } from 'lucide-react';
+"use client";
+import React, { useEffect } from 'react';
 
-interface FileWithPreview extends File {
-  preview?: string;
-}
+const ClientLoginPage = () => {
+  // This effect will load the Google API script dynamically
+  useEffect(() => {
+    // Dynamically load the Google API script
+    const script = document.createElement("script");
+    script.src = "https://apis.google.com/js/api.js";
+    script.async = true;
 
-export default function UploadPage() {
-  const [files, setFiles] = useState<FileWithPreview[]>([]);
+    // Once the script is loaded, initialize the gapi client
+    script.onload = () => {
+      console.log('Google API script loaded');
+      if (window.gapi) {
+        window.gapi.load("client:auth2", () => {
+          // Initialize gapi.auth2 with your OAuth 2.0 client ID
+          window.gapi.auth2.init({
+            client_id: "897169920656-qge61k85p0h127ac0iarnkta04pe6als.apps.googleusercontent.com", // Replace with your actual OAuth 2.0 client ID from Google Developer Console
+          }).then(() => {
+            console.log("Google API client initialized");
+          }).catch((error: any) => {
+            console.error("Error initializing Google API client:", error);
+          });
+        });
+      } else {
+        console.error("Google API not available in window object.");
+      }
+    };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map(file => 
-      Object.assign(file, {
-        preview: file.type.startsWith('image/') 
-          ? URL.createObjectURL(file)
-          : undefined
-      })
-    );
-    setFiles(prev => [...prev, ...newFiles]);
+    // Append the script to the document
+    document.body.appendChild(script);
+
+    // Clean up the script when the component unmounts
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png'],
-      'application/pdf': ['.pdf']
+  // This function will handle the login process
+  const handleLogin = () => {
+    const GoogleAuth = window.gapi.auth2.getAuthInstance();
+    if (GoogleAuth) {
+      GoogleAuth.signIn().then(() => {
+        console.log("User signed in");
+        const profile = GoogleAuth.currentUser.get().getBasicProfile();
+        console.log("Name: " + profile.getName());
+        console.log("Email: " + profile.getEmail());
+        // Here you can handle the signed-in user's data, such as sending it to your server
+      }).catch((error: any) => {
+        console.error("Google login failed:", error);
+      });
+    } else {
+      console.error("GoogleAuth instance is not initialized.");
     }
-  });
-
-  const removeFile = (name: string) => {
-    setFiles(prev => prev.filter(file => file.name !== name));
-  };
-
-  const handleUpload = () => {
-    // Handle file upload here
-    console.log('Files to upload:', files);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
-        <Card className="p-6">
-          <h1 className="text-2xl font-bold mb-4">Upload Files</h1>
-          
-          <div
-            {...getRootProps()}
-            className={`
-              border-2 border-dashed rounded-lg p-6 text-center cursor-pointer
-              ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}
-            `}
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-4">Google Login</h1>
+
+          {/* The Google Login button */}
+          <button 
+            className="px-6 py-3 bg-blue-500 text-white rounded-full" 
+            onClick={handleLogin}
           >
-            <input {...getInputProps()} />
-            <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-gray-600">
-              {isDragActive ? "Drop files here" : "Drag files or click to upload"}
-            </p>
-          </div>
-
-          {files.length > 0 && (
-            <div className="mt-6 space-y-3">
-              {files.map((file) => (
-                <div
-                  key={file.name}
-                  className="flex items-center gap-4 p-3 bg-white rounded border"
-                >
-                  {file.preview ? (
-                    <img
-                      src={file.preview}
-                      alt="Preview"
-                      className="w-10 h-10 rounded object-cover"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                      <span className="text-xs">{file.name.split('.').pop()}</span>
-                    </div>
-                  )}
-                  
-                  <span className="flex-1 truncate">{file.name}</span>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeFile(file.name)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-
-              <Button
-                className="w-full mt-4"
-                onClick={handleUpload}
-              >
-                Upload Files
-              </Button>
-            </div>
-          )}
-        </Card>
+            Login with Google
+          </button>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default ClientLoginPage;
