@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";  // Add this import
+import FolderUpload from '../components/FolderUpload';
 
 interface File {
     id: string;
     name: string;
     path: string;
     mimeType: string;
-    viewLink: string;
-    downloadLink?: string;
+    viewLink?: string;
     size?: string;
+    properties?: {
+        uploadedByApp?: string;
+    };
 }
 
 interface Folder {
@@ -19,10 +21,24 @@ interface Folder {
     modifiedTime: string;
 }
 
+interface FileResponse {
+    accessibleFiles: File[];
+    inaccessibleFiles: {
+        name: string;
+        path: string;
+        reason: string;
+    }[];
+    summary: {
+        totalFiles: number;
+        accessibleCount: number;
+        inaccessibleCount: number;
+    };
+}
+
 export default function DashboardPage() {
     const router = useRouter();  // Add this hook
     const [folders, setFolders] = useState<Folder[]>([]);
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+    const [fileResults, setFileResults] = useState<FileResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [embedding, setEmbedding] = useState(false);
@@ -84,9 +100,7 @@ export default function DashboardPage() {
 
     const handleFolderClick = async (folderId: string, folderName: string) => {
         setIsLoading(true);
-        setEmbedding(true);
-        setProgress(0);
-
+        setError(null);
         try {
             const response = await fetch('/api/files', {
                 method: 'POST',
@@ -102,49 +116,30 @@ export default function DashboardPage() {
                 throw new Error(data.error || 'Failed to fetch files');
             }
 
-            // Start the progress timer
-            const duration = 20000; // 20 seconds
-            const interval = 100; // Update every 100ms
-            const steps = duration / interval;
-            let currentStep = 0;
-
-            const timer = setInterval(() => {
-                currentStep++;
-                const newProgress = Math.min((currentStep / steps) * 100, 100);
-                setProgress(newProgress);
-
-                if (currentStep >= steps) {
-                    clearInterval(timer);
-                    setEmbedding(false);
-                    setIsLoading(false);
-                    router.push('/home/editor'); // Add navigation here
-                }
-            }, interval);
-
-            // Process files in background
-            data.files.forEach((file: File) => {
-                if (file.downloadLink) {
-                    uploadFileStream(file);
-                }
-            });
-        } catch (error: any) {
+            setFileResults(data);
+        } catch (error) {
             setError(error.message);
             setEmbedding(false);
             setIsLoading(false);
         }
     };
 
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen">
-                <p className="text-red-500">{error}</p>
-            </div>
-        );
-    }
-
     return (
         <div className="flex flex-col items-center justify-center min-h-screen">
             <h1 className="text-xl font-bold mb-4">Your Google Drive Folders</h1>
+            
+            <FolderUpload 
+                onUploadStart={() => setIsLoading(true)}
+                onUploadComplete={() => {
+                    setIsLoading(false);
+                    fetchFolders(); // Refresh the folder list
+                }}
+                onError={(error) => {
+                    setError(error);
+                    setIsLoading(false);
+                }}
+            />
+
             {folders && folders.length > 0 ? (
                 <ul className="space-y-2 w-full max-w-md">
                     {folders.map((folder) => (
@@ -179,18 +174,66 @@ export default function DashboardPage() {
                 <p className="text-gray-500">No folders found</p>
             )}
 
-            {embedding && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white p-6 rounded-lg shadow-xl text-center">
-                        <h2 className="text-xl font-semibold mb-4">Embedding Files</h2>
-                        <div className="w-64 h-3 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-blue-500 transition-all duration-100"
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                        <p className="mt-2 text-gray-600">{Math.round(progress)}%</p>
+
+            {isLoading && (
+                <div className="mt-4">
+                    <p>Loading files...</p>
+                </div>
+            )}
+
+            {fileResults && !isLoading && (
+                <div className="mt-4 w-full max-w-md">
+                    <h2 className="text-lg font-semibold mb-2">Files in selected folder:</h2>
+                    <div className="mb-4 text-sm text-gray-600">
+                        Summary: {fileResults.summary.accessibleCount} accessible, 
+                        {fileResults.summary.inaccessibleCount} inaccessible
                     </div>
+                    
+                    {fileResults.accessibleFiles.length > 0 && (
+                        <>
+                            <h3 className="font-medium mb-2">Accessible Files:</h3>
+                            <ul className="space-y-2">
+                                {fileResults.accessibleFiles.map((file) => (
+                                    <li key={file.id} className="p-2 border rounded hover:bg-gray-50">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm font-medium">{file.name}</span>
+                                            <span className="text-xs text-gray-500">
+                                                {file.size && `${Math.round(parseInt(file.size) / 1024)} KB`}
+                                            </span>
+                                        </div>
+                                        <div className="text-xs text-gray-500 mt-1">{file.path}</div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+
+                    {fileResults.inaccessibleFiles.length > 0 && (
+                        <>
+                            <h3 className="font-medium mb-2 mt-4">Inaccessible Files:</h3>
+                            <ul className="space-y-2">
+                                {fileResults.inaccessibleFiles.map((file, index) => (
+                                    <li key={index} className="p-2 border rounded bg-gray-50">
+                                        <div className="text-sm text-red-600">{file.name}</div>
+                                        <div className="text-xs text-gray-500 mt-1">{file.reason}</div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+
+                    {fileResults && !isLoading && fileResults.accessibleFiles.length === 0 && (
+                        <div className="mt-4 text-gray-500">
+                            No files uploaded through this app found in this folder.
+                            Use the upload area above to add files.
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {error && (
+                <div className="mt-4 text-red-500">
+                    {error}
                 </div>
             )}
         </div>

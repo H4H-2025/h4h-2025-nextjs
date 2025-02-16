@@ -12,29 +12,39 @@ export async function GET() {
             return NextResponse.json({ error: "No access token" }, { status: 401 });
         }
 
-        oauth2Client.setCredentials({ access_token: accessToken });
-        const drive = google.drive("v3");
-
-        const result = await drive.files.list({
-            auth: oauth2Client,
-            pageSize: 15,
-            q: "mimeType='application/vnd.google-apps.folder'",
-            fields: "nextPageToken, files(id, name, modifiedTime)",
+        oauth2Client.setCredentials({
+            access_token: accessToken,
+            scope: "https://www.googleapis.com/auth/drive"
         });
 
-        const folders = result.data.files?.sort((a, b) => {
-            const dateA = new Date(a.modifiedTime).setHours(0, 0, 0, 0);
-            const dateB = new Date(b.modifiedTime).setHours(0, 0, 0, 0);
-            
-            if (dateA === dateB) {
-                return a.name.localeCompare(b.name);
-            }
-            return dateB - dateA;
+        const drive = google.drive({ version: "v3", auth: oauth2Client });
+
+        // Query only folders that have uploadedByApp = 'true' and are not trashed.
+        const response = await drive.files.list({
+            q: "mimeType = 'application/vnd.google-apps.folder' and trashed = false and properties has { key='uploadedByApp' and value='true' }",
+            fields: "files(id, name, modifiedTime, properties)",
+            orderBy: "modifiedTime desc",
+            pageSize: 100,
+            supportsAllDrives: true,
+            includeItemsFromAllDrives: true
         });
 
+<<<<<<< Updated upstream
         return NextResponse.json({ folders });
     } catch (error: any) {
         console.error("Detailed error:", error);
         return NextResponse.json({ error: error.message || "Failed to fetch folders" }, { status: 500 });
+=======
+        const folders = response.data.files || [];
+        console.log("Fetched folders:", folders);
+
+        return NextResponse.json({ folders, total: folders.length });
+    } catch (error) {
+        console.error("Folders API Error:", error);
+        return NextResponse.json(
+            { error: "Failed to fetch folders", details: error.message },
+            { status: 500 }
+        );
+>>>>>>> Stashed changes
     }
 }
