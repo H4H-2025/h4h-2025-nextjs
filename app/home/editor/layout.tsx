@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import { useState } from 'react';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Save, Maximize2, Minimize2 } from 'lucide-react';
@@ -61,7 +61,8 @@ export default function ChatEditorLayout() {
 
   return (
     <div className="h-screen w-full bg-background flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b">
+      {/* Fixed-height header */}
+      <div className="h-14 shrink-0 flex items-center justify-between px-4 border-b">
         <h1 className="text-xl font-bold">Chat & Editor</h1>
         <div className="flex gap-2">
           {isEditorOpen && (
@@ -86,65 +87,50 @@ export default function ChatEditorLayout() {
         </div>
       </div>
 
-      <ResizablePanelGroup
-        direction="horizontal"
-        className="flex-1"
-        onLayout={(sizes) => handleResize(sizes)}
-      >
-        {/* Chat Panel */}
-        <ResizablePanel
-          defaultSize={sizes[0]}
-          minSize={MIN_CHAT_SIZE}
-          maxSize={MAX_CHAT_SIZE}
-          className="p-4 flex flex-col"
+      {/* Main content area */}
+      <div className="flex-1 min-h-0">
+        <ResizablePanelGroup
+          direction="horizontal"
+          className="h-max"
+          onLayout={(sizes) => handleResize(sizes)}
         >
-          <div className="flex-1 overflow-auto space-y-2">
-            {/* Using Chat Component */}
-            <Chat messages={messages} onMessageSelect={handleMessageSelect} />
-          </div>
+          {/* Chat Panel */}
+          <ResizablePanel
+            defaultSize={sizes[0]}
+            minSize={MIN_CHAT_SIZE}
+            maxSize={MAX_CHAT_SIZE}
+            className="flex flex-col"
+          >
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <Chat messages={messages} onMessageSelect={handleMessageSelect} />
+            </div>
+          </ResizablePanel>
 
-          {/* Input Bar at the Bottom */}
-          <div className="flex mt-4 space-x-2 mt-auto">
-            <input
-              type="text"
-              value={currentMessage}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyPress}
-              className="flex-1 p-2 border rounded-md"
-              placeholder="I want to find..."
-            />
-            <button
-              onClick={handleSendMessage}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md"
-            >
-              Send
-            </button>
-          </div>
-        </ResizablePanel>
-
-        {/* Editor Panel */}
-        {isEditorOpen && (
-          <>
-            <ResizableHandle withHandle />
-            <ResizablePanel
-              defaultSize={sizes[1]}
-              minSize={100 - MAX_CHAT_SIZE}
-              maxSize={100 - MIN_CHAT_SIZE}
-              className="p-4"
-            >
-              <div className="h-full rounded-lg border bg-card p-4 shadow-sm">
-                {/* Editor Content */}
-                <textarea
-                  value={editorContent}
-                  onChange={(e) => setEditorContent(e.target.value)}
-                  className="w-full h-full p-2 border rounded-md"
-                  placeholder="Your data will appear here..."
-                />
-              </div>
-            </ResizablePanel>
-          </>
-        )}
-      </ResizablePanelGroup>
+          {/* Editor Panel */}
+          {isEditorOpen && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel
+                defaultSize={sizes[1]}
+                minSize={100 - MAX_CHAT_SIZE}
+                maxSize={100 - MIN_CHAT_SIZE}
+                className="flex flex-col"
+              >
+                <div className="h-full p-4">
+                  <div className="h-full rounded-lg border bg-card shadow-sm flex flex-col">
+                    <textarea
+                      value={editorContent}
+                      onChange={(e) => setEditorContent(e.target.value)}
+                      className="flex-1 w-full p-4 resize-none focus:outline-none rounded-lg"
+                      placeholder="Your data will appear here..."
+                    />
+                  </div>
+                </div>
+              </ResizablePanel>
+            </>
+          )}
+        </ResizablePanelGroup>
+      </div>
     </div>
   );
 }
