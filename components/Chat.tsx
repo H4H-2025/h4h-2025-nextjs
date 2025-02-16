@@ -34,57 +34,57 @@ const Chat: React.FC<ChatProps> = ({ messages: initialMessages, onMessageSelect 
       scrollToBottom();
     }, [messages]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!inputText.trim()) return;
-  
-        const userMessage: Message = { text: inputText, sender: 'user' };
-        setMessages(prev => [...prev, userMessage]);
-        setIsLoading(true);
-  
-        try {
-          const response = await fetch('http://127.0.0.1:5000/submit_query', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              queries: [inputText]
-            }),
-          });
-  
-          const data = await response.json();
-  
-          if (!response.ok) {
-            throw new Error(data.message || data.error || 'Server error occurred');
-          }
-  
-          if (data.results && data.results[0]) {
-            const result = data.results[0];
-            if (result.error) {
-              throw new Error(result.error);
-            }
-            const summary = result.summary;
-            const systemMessage: Message = {
-              text: Array.isArray(summary) ? summary.join('\n\n') : summary,
-              sender: 'system',
-              citation: result.citation || undefined
-            };
-            setMessages(prev => [...prev, systemMessage]);
-          }
-        } catch (error) {
-          console.error('Query error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-          setMessages(prev => [...prev, {
-            text: `Error: ${errorMessage}`,
-            sender: 'system'
-          }]);
-        } finally {
-          setIsLoading(false);
-          setInputText('');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    const userMessage: Message = { text: inputText, sender: 'user' };
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/submit_query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          queries: [inputText]
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Server error occurred');
+      }
+
+      if (data.results && data.results[0]) {
+        const result = data.results[0];
+        if (result.error) {
+          throw new Error(result.error);
         }
-      };
+        const summary = result.summary;
+        const systemMessage: Message = {
+          text: Array.isArray(summary) ? summary.join('\n\n') : summary,
+          sender: 'system',
+          citation: result.citation || undefined
+        };
+        setMessages(prev => [...prev, systemMessage]);
+      }
+    } catch (error) {
+      console.error('Query error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      setMessages(prev => [...prev, {
+        text: `Error: ${errorMessage}`,
+        sender: 'system'
+      }]);
+    } finally {
+      setIsLoading(false);
+      setInputText('');
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -146,11 +146,8 @@ const Chat: React.FC<ChatProps> = ({ messages: initialMessages, onMessageSelect 
         <Card className="flex flex-col h-full">
           <CardContent className="flex-1 p-4 min-h-0">
             <div className="flex flex-col h-full">
-              <ScrollArea className="flex-1 min-h-0 h-[calc(100vh-200px)]">
-                <div 
-                  ref={scrollAreaRef}
-                  className="space-y-4 pb-4 overflow-y-auto h-full"
-                >
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="space-y-4 pb-4">
                   {messages.map((message, index) => (
                     <div
                       key={index}
@@ -175,6 +172,7 @@ const Chat: React.FC<ChatProps> = ({ messages: initialMessages, onMessageSelect 
                       </Card>
                     </div>
                   ))}
+                  <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
 
