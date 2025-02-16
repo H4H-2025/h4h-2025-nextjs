@@ -1,19 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import FolderUpload from '../components/FolderUpload';
-
-interface File {
-    id: string;
-    name: string;
-    path: string;
-    mimeType: string;
-    viewLink?: string;
-    size?: string;
-    properties?: {
-        uploadedByApp?: string;
-    };
-}
+import { useRouter } from "next/navigation";
+import { Progress } from "@/components/ui/progress";
 
 interface Folder {
     id: string;
@@ -22,7 +11,12 @@ interface Folder {
 }
 
 interface FileResponse {
-    accessibleFiles: File[];
+    accessibleFiles: {
+        id: string;
+        name: string;
+        path: string;
+        size?: string;
+    }[];
     inaccessibleFiles: {
         name: string;
         path: string;
@@ -36,71 +30,58 @@ interface FileResponse {
 }
 
 export default function DashboardPage() {
-    const router = useRouter();  // Add this hook
+    const router = useRouter();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [fileResults, setFileResults] = useState<FileResponse | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [embedding, setEmbedding] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
         fetchFolders();
     }, []);
 
     const fetchFolders = async () => {
+        setIsLoading(true);
         try {
             const response = await fetch('/api/folders');
+            console.log('API Response:', response);
             const data = await response.json();
+            console.log('Folders data:', data);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Failed to fetch folders');
             }
 
-            setFolders(data.folders);
+            setFolders(data.folders || []);
         } catch (error: any) {
+            console.error('Error fetching folders:', error);
             setError(error.message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Updated function to use the proxy endpoint
-    const uploadFileStream = async (file: File) => {
-        if (!file.downloadLink) return;
-        // try {
-        //     const proxyUrl = `/api/proxy?url=${encodeURIComponent(file.downloadLink)}`;
-        //     const fileResponse = await fetch(proxyUrl, {
-        //         credentials: 'include' // Include cookies and authentication headers
-        //     });
-
-        //     if (!fileResponse.ok) {
-        //         throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
-        //     }
-
-        //     const fileBlob = await fileResponse.blob();
-            
-        //     // Rest of your upload code...
-        //     // const url = new URL('http://127.0.0.1:5000/embed_folder');
-        //     // url.searchParams.append('filename', file.name);
-        //     // url.searchParams.append('type', file.mimeType);
-
-        //     // const uploadResponse = await fetch(url.toString(), {
-        //     //     method: 'POST',
-        //     //     mode: 'no-cors',
-        //     //     headers: {
-        //     //         'Content-Type': file.mimeType || 'application/octet-stream',
-        //     //     },
-        //     //     body: fileBlob
-        //     // });
-
-        // } catch (err: any) {
-        //     console.error('Upload error:', err);
-        //     setError(err.message);
-        // }
-    };
-
     const handleFolderClick = async (folderId: string, folderName: string) => {
-        setIsLoading(true);
-        setError(null);
+        setIsProcessing(true);
+        setProgress(0);
+        
+        // Start the timer
+        const startTime = Date.now();
+        const duration = 10000; // 10 seconds
+        
+        const timer = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const newProgress = Math.min((elapsed / duration) * 100, 100);
+            setProgress(newProgress);
+            
+            if (elapsed >= duration) {
+                clearInterval(timer);
+                router.push('/home/editor');
+            }
+        }, 100);
+
         try {
             const response = await fetch('/api/files', {
                 method: 'POST',
@@ -117,40 +98,43 @@ export default function DashboardPage() {
             }
 
             setFileResults(data);
-        } catch (error) {
+        } catch (error: any) {
             setError(error.message);
-            setEmbedding(false);
-            setIsLoading(false);
         }
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen">
-            <h1 className="text-xl font-bold mb-4">Your Google Drive Folders</h1>
+        <div className="flex flex-col items-center justify-center min-h-screen p-4">
+            <h1 className="text-2xl font-bold mb-6">Your Google Drive Folders</h1>
             
-            <FolderUpload 
-                onUploadStart={() => setIsLoading(true)}
-                onUploadComplete={() => {
-                    setIsLoading(false);
-                    fetchFolders(); // Refresh the folder list
-                }}
-                onError={(error) => {
-                    setError(error);
-                    setIsLoading(false);
-                }}
-            />
+            {isProcessing && (
+                <div className="w-full max-w-md mb-6">
+                    <Progress value={progress} className="w-full" />
+                    <p className="text-sm text-gray-500 mt-2 text-center">
+                        Processing folder... {Math.round(progress)}%
+                    </p>
+                </div>
+            )}
+
+            {isLoading && (
+                <div className="w-full max-w-md p-4 text-center">
+                    <p className="text-gray-600">Loading...</p>
+                </div>
+            )}
 
             {folders && folders.length > 0 ? (
                 <ul className="space-y-2 w-full max-w-md">
                     {folders.map((folder) => (
                         <li
                             key={folder.id}
-                            className="p-3 border rounded-lg hover:bg-gray-50 flex items-center justify-between cursor-pointer"
+                            className={`p-4 border rounded-lg hover:bg-gray-50 flex items-center justify-between cursor-pointer transition-colors ${
+                                isProcessing ? 'pointer-events-none opacity-50' : ''
+                            }`}
                             onClick={() => handleFolderClick(folder.id, folder.name)}
                         >
                             <div className="flex items-center">
                                 <svg
-                                    className="w-5 h-5 mr-2 text-gray-500"
+                                    className="w-5 h-5 mr-3 text-gray-500"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -162,7 +146,7 @@ export default function DashboardPage() {
                                         d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                                     />
                                 </svg>
-                                {folder.name}
+                                <span className="font-medium">{folder.name}</span>
                             </div>
                             <span className="text-sm text-gray-500">
                                 {new Date(folder.modifiedTime).toLocaleDateString()}
@@ -171,13 +155,12 @@ export default function DashboardPage() {
                     ))}
                 </ul>
             ) : (
-                <p className="text-gray-500">No folders found</p>
+                <p className="text-gray-500">No folders found in your Google Drive</p>
             )}
 
-
-            {isLoading && (
-                <div className="mt-4">
-                    <p>Loading files...</p>
+            {error && (
+                <div className="mt-4 p-4 bg-red-50 text-red-600 rounded-lg max-w-md">
+                    {error}
                 </div>
             )}
 
@@ -221,19 +204,6 @@ export default function DashboardPage() {
                             </ul>
                         </>
                     )}
-
-                    {fileResults && !isLoading && fileResults.accessibleFiles.length === 0 && (
-                        <div className="mt-4 text-gray-500">
-                            No files uploaded through this app found in this folder.
-                            Use the upload area above to add files.
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {error && (
-                <div className="mt-4 text-red-500">
-                    {error}
                 </div>
             )}
         </div>

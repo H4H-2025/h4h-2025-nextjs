@@ -6,7 +6,7 @@ import { Upload, Edit } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-muted-foreground">
@@ -15,7 +15,7 @@ export default function HomePage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Link href="/home/upload">
+        <Link href="/drive">
           <Card className="hover:bg-accent transition-colors cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-lg font-medium">Upload Files</CardTitle>

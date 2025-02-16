@@ -29,7 +29,7 @@ interface ChatProps {
 
 const Chat = ({ messages, onMessageSelect }: ChatProps) => {
   return (
-    <ScrollArea className="h-[calc(100vh-180px)]"> {/* Adjust height to account for header and input */}
+    <ScrollArea className="h-[calc(100vh-150px)]"> {/* Added negative margin bottom */}
       <div className="flex flex-col space-y-4 p-4">
         {messages.map((message, index) => (
           <div
@@ -65,7 +65,7 @@ const Chat = ({ messages, onMessageSelect }: ChatProps) => {
                       size="sm"
                       className="w-full mt-2"
                     >
-                      Use This Code
+                      Use This Chunk
                     </Button>
                   </>
                 )}
@@ -202,23 +202,28 @@ export default function EditorPage() {
           defaultSize={sizes[0]}
           minSize={MIN_CHAT_SIZE}
           maxSize={MAX_CHAT_SIZE}
-          className="p-4 flex flex-col overflow-hidden"
+          className="flex flex-col overflow-hidden"
         >
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 overflow-hidden p-4">
             <Chat messages={messages} onMessageSelect={handleMessageSelect} />
           </div>
 
-          <div className="flex-none gap-2 mt-4">
-            <Input
-              value={currentMessage}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyPress}
-              placeholder="I want to find..."
-              className="flex-1"
-            />
-            <Button onClick={handleSendMessage}>
-              Send
-            </Button>
+          <div className="flex-none p-4 pt-0">
+            <div className="flex gap-2">
+              <Input
+                value={currentMessage}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyPress}
+                placeholder="I want to find..."
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleSendMessage}
+                className="flex-none"
+              >
+                Send
+              </Button>
+            </div>
           </div>
         </ResizablePanel>
 

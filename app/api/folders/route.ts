@@ -19,32 +19,25 @@ export async function GET() {
 
         const drive = google.drive({ version: "v3", auth: oauth2Client });
 
-        // Query only folders that have uploadedByApp = 'true' and are not trashed.
+        // Modified query to show all non-trashed folders
         const response = await drive.files.list({
-            q: "mimeType = 'application/vnd.google-apps.folder' and trashed = false and properties has { key='uploadedByApp' and value='true' }",
-            fields: "files(id, name, modifiedTime, properties)",
+            q: "mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+            fields: "files(id, name, modifiedTime)",
             orderBy: "modifiedTime desc",
             pageSize: 100,
             supportsAllDrives: true,
             includeItemsFromAllDrives: true
         });
 
-<<<<<<< Updated upstream
-        return NextResponse.json({ folders });
-    } catch (error: any) {
-        console.error("Detailed error:", error);
-        return NextResponse.json({ error: error.message || "Failed to fetch folders" }, { status: 500 });
-=======
         const folders = response.data.files || [];
         console.log("Fetched folders:", folders);
 
         return NextResponse.json({ folders, total: folders.length });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Folders API Error:", error);
         return NextResponse.json(
             { error: "Failed to fetch folders", details: error.message },
             { status: 500 }
         );
->>>>>>> Stashed changes
     }
 }
