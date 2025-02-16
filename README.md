@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# H4H-2025-NEXTJS: Gather Quality Context Quickly
 
-## Getting Started
+A modern, feature-rich file management system built with Next.js, featuring Google Drive integration, real-time file upload capabilities, and an intuitive dashboard interface.
 
-First, run the development server:
+## ✨ Features
 
+- **Google Drive Integration**: Seamlessly connect and manage your Google Drive files
+- **Drag & Drop Upload**: Easy file uploading with progress tracking
+- **Folder Management**: Create, organize, and navigate through folder structures
+- **Dashboard Views**: Monitor and manage your files through an intuitive interface
+- **OAuth2 Authentication**: Secure access to your files with Google authentication
+- **Real-time Updates**: Instant feedback on file operations
+- **Responsive Design**: Works seamlessly across desktop and mobile devices
+
+## 🚀 Getting Started
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/H4H-2025-NEXTJS.git
+cd H4H-2025-NEXTJS
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up your environment variables:
+```bash
+cp .env.example .env.local
+```
+Edit `.env.local` and add your Google OAuth credentials:
+```
+GOOGLE_CLIENT_ID=your_client_id
+GOOGLE_CLIENT_SECRET=your_client_secret
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Start the development server:
+```bash
+npm run dev
+```
 
-## Learn More
+Visit [http://localhost:3000](http://localhost:3000) to see your application running.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Framework**: Next.js with App Router
+- **Styling**: Tailwind CSS
+- **Authentication**: NextAuth.js with Google Provider
+- **File Handling**: Custom file upload system
+- **UI Components**: Shadcn
+- **State Management**: React Context API
+- **API Routes**: Next.js API routes with TypeScript
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📁 Project Structure
 
-## Deploy on Vercel
+```
+├── app/
+│   ├── api/           # API routes
+│   ├── components/    # Reusable UI components
+│   ├── drive/        # Google Drive integration
+│   ├── home/         # Main application pages
+|   ├── editor/         # Edit application pages
+│   └── upload/       # File upload functionality
+├── public/           # Static assets
+└── utils/           # Helper functions
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built with ❤️ for H4H 2025
