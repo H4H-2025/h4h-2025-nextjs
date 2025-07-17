@@ -131,7 +131,7 @@ export default function EditorPage() {
       setMessages([{ text: currentMessage, sender: 'user' }]);
 
       try {
-        const response = await fetch(`http://127.0.0.1:5000/submit_query?q=${encodeURIComponent(currentMessage)}`);
+        const response = await fetch(`https://pharmasure-api-production.up.railway.app/submit_query?q=${encodeURIComponent(currentMessage)}`);
 
         if (!response.ok) {
           throw new Error('Failed to get response from API');
